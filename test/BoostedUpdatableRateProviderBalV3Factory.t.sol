@@ -7,11 +7,13 @@ pragma solidity ^0.8.24;
 import {Test} from "forge-std/Test.sol";
 import {Ownable} from "oz/access/Ownable.sol";
 
-import {UpdatableRateProviderBalV3Factory} from "src/UpdatableRateProviderBalV3Factory.sol";
+import {
+    BoostedUpdatableRateProviderBalV3Factory
+} from "src/BoostedUpdatableRateProviderBalV3Factory.sol";
 import {BoostedUpdatableRateProviderBalV3} from "src/BoostedUpdatableRateProviderBalV3.sol";
 import {ConstRateProvider} from "./ConstRateProvider.sol";
 
-contract UpdatableRateProviderBalV3FactoryTest is Test {
+contract BoostedUpdatableRateProviderBalV3FactoryTest is Test {
     address internal owner = makeAddr("owner");
     address internal admin = makeAddr("admin");
     address internal updater = makeAddr("updater");
@@ -19,11 +21,11 @@ contract UpdatableRateProviderBalV3FactoryTest is Test {
 
     ConstRateProvider internal feed;
     ConstRateProvider internal yieldRateProvider;
-    UpdatableRateProviderBalV3Factory internal factory;
+    BoostedUpdatableRateProviderBalV3Factory internal factory;
 
     uint256 internal constant INITIAL_RATE = 2e18;
     uint256 internal constant YIELD_RATE = 1.05e18;
-    string internal constant FACTORY_VERSION = "UpdatableRateProviderBalV3Factory v1";
+    string internal constant FACTORY_VERSION = "BoostedUpdatableRateProviderBalV3Factory v1";
     uint256 internal constant RATE_PROVIDER_VERSION = 1;
 
     function setUp() public {
@@ -33,8 +35,9 @@ contract UpdatableRateProviderBalV3FactoryTest is Test {
         yieldRateProvider = new ConstRateProvider();
         yieldRateProvider.setRate(YIELD_RATE);
 
-        factory =
-            new UpdatableRateProviderBalV3Factory(owner, FACTORY_VERSION, RATE_PROVIDER_VERSION);
+        factory = new BoostedUpdatableRateProviderBalV3Factory(
+            owner, FACTORY_VERSION, RATE_PROVIDER_VERSION
+        );
     }
 
     function test_create_deploysWorkingRateProvider() public {
@@ -52,7 +55,7 @@ contract UpdatableRateProviderBalV3FactoryTest is Test {
 
     function test_create_boosted() public {
         vm.expectEmit(true, false, false, false, address(factory));
-        emit UpdatableRateProviderBalV3Factory.RateProviderCreated(
+        emit BoostedUpdatableRateProviderBalV3Factory.RateProviderCreated(
             address(feed), false, 0, admin, updater, address(yieldRateProvider), address(0)
         );
         BoostedUpdatableRateProviderBalV3 urp =
@@ -104,7 +107,9 @@ contract UpdatableRateProviderBalV3FactoryTest is Test {
         vm.prank(owner);
         factory.disable();
 
-        vm.expectRevert(UpdatableRateProviderBalV3Factory.RateProviderFactoryIsDisabled.selector);
+        vm.expectRevert(
+            BoostedUpdatableRateProviderBalV3Factory.RateProviderFactoryIsDisabled.selector
+        );
         factory.create(address(feed), false, 0, admin, updater, address(0));
     }
 
@@ -113,7 +118,9 @@ contract UpdatableRateProviderBalV3FactoryTest is Test {
         factory.disable();
 
         vm.prank(owner);
-        vm.expectRevert(UpdatableRateProviderBalV3Factory.RateProviderFactoryIsDisabled.selector);
+        vm.expectRevert(
+            BoostedUpdatableRateProviderBalV3Factory.RateProviderFactoryIsDisabled.selector
+        );
         factory.disable();
     }
 }

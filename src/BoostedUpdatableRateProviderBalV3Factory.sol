@@ -13,7 +13,7 @@ import {BoostedUpdatableRateProviderBalV3} from "./BoostedUpdatableRateProviderB
 /// (non-boosted) updatable rate provider.
 /// @dev Create always deploys a new instance (no uniqueness by feed/params): the same feed may
 /// be used across many pools, and each pool needs its own rate provider.
-contract UpdatableRateProviderBalV3Factory is Ownable {
+contract BoostedUpdatableRateProviderBalV3Factory is Ownable {
     /// @notice A new updatable rate provider was created.
     event RateProviderCreated(
         address indexed feed,
