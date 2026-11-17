@@ -6,9 +6,11 @@ pragma solidity ^0.8.24;
 
 import {Ownable} from "oz/access/Ownable.sol";
 
-import {UpdatableRateProviderBalV3} from "./UpdatableRateproviderBalV3.sol";
+import {BoostedUpdatableRateProviderBalV3} from "./BoostedUpdatableRateProviderBalV3.sol";
 
-/// @notice Factory for deploying and managing Balancer V3 updatable rate providers.
+/// @notice Factory for deploying and managing Balancer V3 updatable rate providers. Deploys
+/// `BoostedUpdatableRateProviderBalV3`; pass `yieldRateProvider = address(0)` for a plain
+/// (non-boosted) updatable rate provider.
 /// @dev Create always deploys a new instance (no uniqueness by feed/params): the same feed may
 /// be used across many pools, and each pool needs its own rate provider.
 contract UpdatableRateProviderBalV3Factory is Ownable {
@@ -19,6 +21,7 @@ contract UpdatableRateProviderBalV3Factory is Ownable {
         uint256 initialValue,
         address admin,
         address updater,
+        address yieldRateProvider,
         address indexed rateProvider
     );
 
@@ -53,26 +56,33 @@ contract UpdatableRateProviderBalV3Factory is Ownable {
         return _rateProviderVersion;
     }
 
-    /// @notice Creates a new `UpdatableRateProviderBalV3`.
-    /// @param feed A RateProvider to use for updates
+    /// @notice Creates a new `BoostedUpdatableRateProviderBalV3`.
+    /// @param feed A RateProvider to use for updates (price of the underlying, e.g. ETH/USD)
     /// @param invert If true, use 1/(feed value) instead of the feed value itself
-    /// @param initialValue If not 0, use this as the initial stored rate; if 0, use the feed
+    /// @param initialValue If not 0, use this as the initial stored value; if 0, use the feed
     /// @param admin Address for `DEFAULT_ADMIN_ROLE` (can `setPool()` and manage roles)
     /// @param updater Address for `UPDATER_ROLE` (can `updateToEdge()`); pass zero to leave unset
+    /// @param yieldRateProvider Live rate of the yield-bearing wrapper (e.g.
+    ///     `ERC4626RateProvider(waBasWETH)`), multiplied onto the stored value; zero for none
     /// @return rateProvider The deployed rate provider
     function create(
         address feed,
         bool invert,
         uint256 initialValue,
         address admin,
-        address updater
-    ) external returns (UpdatableRateProviderBalV3 rateProvider) {
+        address updater,
+        address yieldRateProvider
+    ) external returns (BoostedUpdatableRateProviderBalV3 rateProvider) {
         _ensureEnabled();
 
-        rateProvider = new UpdatableRateProviderBalV3(feed, invert, initialValue, admin, updater);
+        rateProvider = new BoostedUpdatableRateProviderBalV3(
+            feed, invert, initialValue, admin, updater, yieldRateProvider
+        );
         _isRateProviderFromFactory[address(rateProvider)] = true;
 
-        emit RateProviderCreated(feed, invert, initialValue, admin, updater, address(rateProvider));
+        emit RateProviderCreated(
+            feed, invert, initialValue, admin, updater, yieldRateProvider, address(rateProvider)
+        );
     }
 
     /// @notice Checks whether the given rate provider was created by this factory.
